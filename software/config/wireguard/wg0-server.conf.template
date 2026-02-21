@@ -1,0 +1,40 @@
+# WireGuard Server Configuration Template
+#
+# Deploy to: /etc/wireguard/wg0.conf on the IMF
+# Enable:    systemctl enable --now wg-quick@wg0
+#
+# Generate keys:
+#   wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
+#   chmod 600 /etc/wireguard/privatekey
+
+[Interface]
+# WireGuard tunnel address for the IMF (server)
+Address    = 10.200.0.1/24
+
+# UDP port on which the IMF listens for incoming WireGuard connections
+ListenPort = 51820
+
+# Private key of the IMF – replace with output of: cat /etc/wireguard/privatekey
+PrivateKey = <IMF_PRIVATE_KEY>
+
+# Post-up / post-down hooks (optional – enable IP forwarding if not set in sysctl)
+PostUp   = sysctl -w net.ipv4.ip_forward=1
+PostDown = sysctl -w net.ipv4.ip_forward=0
+
+# ---------------------------------------------------------------------------
+# Add one [Peer] block for each authorised administrator workstation
+# ---------------------------------------------------------------------------
+
+[Peer]
+# Human-readable comment (optional)
+# Admin: <ADMIN_NAME>
+
+# Public key of the administrator workstation
+PublicKey  = <ADMIN_PUBLIC_KEY>
+
+# Optional pre-shared key for defence-in-depth
+# Generate with: wg genpsk
+# PresharedKey = <PRESHARED_KEY>
+
+# Source IP address(es) this peer is allowed to use inside the tunnel
+AllowedIPs = 10.200.0.2/32

@@ -1,0 +1,35 @@
+# WireGuard Client Configuration Template
+#
+# Install on the administrator workstation.
+# Replace all <PLACEHOLDER> values before use.
+#
+# Generate keys:
+#   wg genkey | tee privatekey | wg pubkey > publickey
+#   chmod 600 privatekey
+
+[Interface]
+# WireGuard tunnel address for this client
+Address    = 10.200.0.2/24
+
+# Private key of this client workstation
+PrivateKey = <ADMIN_PRIVATE_KEY>
+
+# Optional: use IMF as DNS resolver inside the tunnel
+# DNS = 10.200.0.1
+
+[Peer]
+# Public key of the IMF (server)
+PublicKey  = <IMF_PUBLIC_KEY>
+
+# Optional pre-shared key (must match server config)
+# PresharedKey = <PRESHARED_KEY>
+
+# Public IP and port of the IMF
+Endpoint   = <IMF_PUBLIC_IP>:51820
+
+# Route the WireGuard subnet AND the iLO management network through the tunnel
+# Adjust 192.168.100.0/24 to the actual iLO network address range
+AllowedIPs = 10.200.0.0/24, 192.168.100.0/24
+
+# Keep-alive packet every 25 seconds (useful behind NAT)
+PersistentKeepalive = 25
