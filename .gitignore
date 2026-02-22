@@ -2,46 +2,59 @@
 # Integrated Micro Firewall – .gitignore
 # =============================================================================
 
-# ---------------------
-# Vendor BSP tarballs (download via scripts/fetch-vendor-bsp.sh)
-# ---------------------
-software/vendor/bsp/
-hardware/vendor/myir/tools/
+# ---------------------------------------------------------------------------
+#  Yocto Build System
+# ---------------------------------------------------------------------------
 
-# Large binary archives – never track
-*.tar.bz2
-*.tar.xz
-*.tar.gz
-*.tar.zst
-*.rar
+# Build outputs (tmp-glibc for nodistro, tmp for others)
+yocto-bsp/build/tmp*/
 
-# Redundant ZIPs of already-tracked directories
-hardware/vendor/myir/**/*.zip
+# BitBake cache
+yocto-bsp/build/cache/
 
-# ---------------------
-# Yocto / OpenEmbedded build artefacts
-# ---------------------
-yocto-bsp/
-build/
-poky/
-bitbake/
-sstate-cache/
-downloads/
-tmp/
-cache/
-buildhistory/
+# Download cache (reproducible, re-downloadable)
+yocto-bsp/build/downloads/
+
+# Shared-state cache
+yocto-bsp/build/sstate-cache/
+
+# BitBake server log & lock files
+yocto-bsp/build/bitbake-cookerdaemon.log
+yocto-bsp/build/bitbake.lock
+yocto-bsp/build/hashserve.db*
+
+# BitBake task stamps & signatures
 *.do_*
 *.sigdata.*
 *.siginfo
 
-# ---------------------
-# KiCad
-# ---------------------
-# Backup files
+# NOTE: yocto-bsp/build/conf/ is intentionally NOT ignored.
+# bblayers.conf, local.conf and templateconf.cfg contain project-specific
+# customizations (meta-imf layer path, MACHINE=myd-yf13x, layer list, etc.)
+# that are not correctly generated from vendor templates.
+# oe-init-build-env will not overwrite existing files, so tracking is safe.
+
+# ---------------------------------------------------------------------------
+#  Extracted BSP layers (downloaded via `make bsp-fetch` + `make bsp-extract`)
+# ---------------------------------------------------------------------------
+yocto-bsp/layers/openembedded-core/
+yocto-bsp/layers/meta-openembedded/
+yocto-bsp/layers/meta-qt5/
+yocto-bsp/layers/meta-st/
+yocto-bsp/layers/meta-myir-st/
+
+# ---------------------------------------------------------------------------
+#  Vendor BSP tarballs (hosted in GHCR, downloaded via oras)
+# ---------------------------------------------------------------------------
+.release-staging/
+software/vendor/bsp/
+
+# ---------------------------------------------------------------------------
+#  KiCad
+# ---------------------------------------------------------------------------
 *-backups/
 *.kicad_pcb-bak
 *.kicad_sch-bak
-*.bak
 _autosave-*
 fp-info-cache
 *.dsn
@@ -51,29 +64,21 @@ fp-info-cache
 hardware/kicad/gerber/
 hardware/kicad/fabrication/
 
-# ---------------------
-# Editors & OS
-# ---------------------
-*~
-*.swp
-*.swo
-.vscode/
-.idea/
-*.DS_Store
-Thumbs.db
+# Redundant ZIPs of already-tracked directories
+hardware/vendor/myir/**/*.zip
 
-# ---------------------
-# Python
-# ---------------------
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
+# ---------------------------------------------------------------------------
+#  Large binary archives (hosted externally)
+# ---------------------------------------------------------------------------
+*.tar.bz2
+*.tar.xz
+*.tar.gz
+*.tar.zst
+*.rar
 
-# ---------------------
-# Compiled binaries (BSP examples, etc.)
-# ---------------------
+# ---------------------------------------------------------------------------
+#  Compiled binaries (BSP examples, etc.)
+# ---------------------------------------------------------------------------
 *.o
 *.elf
 *.bin
@@ -83,3 +88,27 @@ venv/
 *.wic.gz
 *.ext4
 *.rootfs.*
+
+# ---------------------------------------------------------------------------
+#  IDE / Editor
+# ---------------------------------------------------------------------------
+.vscode/
+*.swp
+*.swo
+*~
+.idea/
+
+# ---------------------------------------------------------------------------
+#  OS
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+#  Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/

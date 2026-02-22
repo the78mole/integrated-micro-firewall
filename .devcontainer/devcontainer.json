@@ -30,11 +30,9 @@
         "source=imf-yocto-downloads,target=/workspace/yocto-bsp/build/downloads,type=volume",
         "source=imf-yocto-sstate,target=/workspace/yocto-bsp/build/sstate-cache,type=volume"
     ],
-    "runArgs": [
-        // Yocto builds need significant resources
-        "--memory=16g",
-        "--cpus=8"
-    ],
+    // Note: Do NOT set --memory or --cpus in runArgs.
+    // Codespaces manages container resources based on the selected machine type.
+    // Hardcoded values cause startup failures on smaller instances.
     "customizations": {
         "vscode": {
             "settings": {

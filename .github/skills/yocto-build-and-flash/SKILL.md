@@ -66,6 +66,35 @@ To find collection names: `grep BBFILE_COLLECTIONS <layer>/conf/layer.conf`
 - All build artefacts are in `yocto-bsp/build/tmp-glibc/`, not `yocto-bsp/build/tmp/`.
 - This is a common source of confusion when searching for images.
 
+## Origin of build/conf/ Files
+
+The files in `yocto-bsp/build/conf/` (`local.conf`, `bblayers.conf`, `templateconf.cfg`) are **not** hand-written from scratch – they originate from the **`oe-init-build-env`** bootstrap mechanism:
+
+1. When you run `source oe-init-build-env <build-dir>`, the script checks whether `<build-dir>/conf/local.conf` already exists.
+2. **First run (no conf/):** The script reads `templateconf.cfg` to find the template directory and copies the sample files:
+   - `bblayers.conf.sample` → `bblayers.conf`
+   - `local.conf.sample` → `local.conf`
+   - `conf-notes.txt` → displayed to terminal
+3. **Subsequent runs (conf/ exists):** The script leaves all files untouched and only sets up the shell environment (`PATH`, `BUILDDIR`, etc.).
+
+### templateconf.cfg
+
+`yocto-bsp/build/conf/templateconf.cfg` currently points to `meta/conf` (the OE-Core default). MYiR provides its own templates at `meta-myir-st/conf/template/`, but we do not use them because our configuration diverges significantly:
+
+- `bblayers.conf` includes `meta-imf` and uses `OEROOT`-relative paths
+- `local.conf` sets `MACHINE = "myd-yf13x"` (vendor default is `myd-yf13x` but the OE-Core template defaults to `qemux86-64`)
+- Layer dependencies and collection names have been corrected
+
+### Why build/conf/ is tracked in Git
+
+Because our configuration files contain project-specific customizations that differ from any vendor template, they are **checked into Git**. The `.gitignore` intentionally does **not** ignore `yocto-bsp/build/conf/`. This ensures:
+
+- New contributors get a working build configuration immediately after `git clone`
+- No manual `oe-init-build-env` bootstrap is required before `make yocto-build`
+- Changes to layer configuration are tracked and reviewable via pull requests
+
+Other `build/` subdirectories (`tmp-glibc/`, `cache/`, `downloads/`, `sstate-cache/`) are generated artefacts and **are** ignored.
+
 ## Building
 
 ### Via Makefile (recommended)
