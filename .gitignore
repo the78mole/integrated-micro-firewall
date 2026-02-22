@@ -21,6 +21,7 @@ hardware/vendor/myir/**/*.zip
 # ---------------------
 # Yocto / OpenEmbedded build artefacts
 # ---------------------
+yocto-bsp/
 build/
 poky/
 bitbake/

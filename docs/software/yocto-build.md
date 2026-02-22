@@ -23,140 +23,177 @@ sudo apt-get install -y \
     zstd liblz4-tool
 ```
 
+### Required CLI Tools
+
+| Tool | Purpose |
+|------|---------|
+| `gh` | GitHub CLI – authentication |
+| `oras` | OCI Registry As Storage – download vendor BSP tarballs |
+| `make` | Build orchestration |
+
 ## Repository Layout
 
+The Yocto BSP is fully contained in the repository. No external cloning is needed.
+
 ```
-build/
-├── conf/
-│   ├── bblayers.conf   # Layer configuration
-│   └── local.conf      # Machine / distro / build settings
-└── downloads/          # Shared download cache (optional, set via DL_DIR)
+yocto-bsp/
+├── build/
+│   └── conf/
+│       ├── bblayers.conf      # Layer configuration (pre-configured)
+│       └── local.conf         # Machine / distro / build settings
+└── layers/                    # Extracted from vendor BSP tarball
+    ├── openembedded-core/     # OE-Core (meta) – base layer
+    ├── meta-openembedded/     # meta-oe, meta-python, meta-networking, …
+    ├── meta-qt5/              # Qt5 support layer
+    ├── meta-st/               # ST BSP layers
+    │   ├── meta-st-stm32mp/
+    │   ├── meta-st-stm32mp-addons/
+    │   └── meta-st-openstlinux/
+    └── meta-myir-st/          # MYiR board-specific layer
 
-sources/
-├── poky/               # Yocto poky (kirkstone branch)
-├── meta-openembedded/  # meta-oe, meta-networking (kirkstone branch)
-├── meta-myir/          # MYiR BSP layer (from MYiR GitHub)
-└── meta-imf/           # IMF custom layer (this repository: software/meta-imf/)
+software/
+└── meta-imf/                  # IMF custom Yocto layer (project-specific)
+    └── conf/layer.conf
 ```
 
-## Setting Up the Build Environment
+### Layer Dependency Overview
 
-### 1. Clone the Required Sources
+The following layers are required and configured in `bblayers.conf`:
+
+| Layer | Collection name | Source | Purpose |
+|-------|----------------|--------|---------|
+| `openembedded-core/meta` | `core` | BSP tarball | OE-Core base |
+| `meta-openembedded/meta-oe` | `openembedded-layer` | BSP tarball | Common OE recipes |
+| `meta-openembedded/meta-python` | `meta-python` | BSP tarball | Python packages |
+| `meta-openembedded/meta-networking` | `networking-layer` | BSP tarball | Networking recipes |
+| `meta-openembedded/meta-gnome` | | BSP tarball | GNOME dependencies |
+| `meta-openembedded/meta-initramfs` | | BSP tarball | initramfs support |
+| `meta-openembedded/meta-multimedia` | | BSP tarball | Multimedia support |
+| `meta-openembedded/meta-webserver` | | BSP tarball | Web server recipes |
+| `meta-openembedded/meta-filesystems` | | BSP tarball | Filesystem tools |
+| `meta-openembedded/meta-perl` | | BSP tarball | Perl packages |
+| `meta-st/meta-st-stm32mp` | `stm-st-stm32mp` | BSP tarball | ST STM32MP BSP |
+| `meta-st/meta-st-stm32mp-addons` | `stm-st-stm32mp-mx` | BSP tarball | STM32MP CubeMX addons |
+| `meta-st/meta-st-openstlinux` | `st-openstlinux` | BSP tarball | OpenSTLinux distro |
+| `meta-qt5` | `qt5-layer` | BSP tarball | Qt5 framework |
+| `meta-myir-st` | `stm-myir-st` | BSP tarball | MYiR board support |
+| `software/meta-imf` | `meta-imf` | This repo | Custom firewall layer |
+
+> **Important:** Layer dependencies use _collection names_, not directory names.
+> For example, `meta-oe` has collection name `openembedded-layer`, and
+> `meta-networking` has collection name `networking-layer`. Getting these wrong
+> causes `Layer '…' depends on layer '…', but this layer is not enabled` errors.
+
+## Building with Make (Recommended)
+
+The project Makefile automates the entire workflow:
 
 ```bash
-mkdir -p ~/imf-build/sources
-cd ~/imf-build/sources
+# 1. Authenticate with GHCR (one-time)
+make bsp-login
 
-# Yocto Poky
-git clone -b kirkstone https://git.yoctoproject.org/poky
+# 2. Download vendor BSP tarballs (~360 MB)
+make bsp-fetch
 
-# OpenEmbedded layers
-git clone -b kirkstone https://github.com/openembedded/meta-openembedded
+# 3. Extract BSP layers into yocto-bsp/layers/
+make bsp-extract
 
-# MYiR BSP (replace URL with the actual MYiR repository URL)
-git clone -b kirkstone https://github.com/MYiRTech/meta-myir-imx
+# 4. Validate layer configuration
+make yocto-check
 
-# IMF custom layer (from this repository)
-ln -s /path/to/integrated-micro-firewall/software/meta-imf \
-      ~/imf-build/sources/meta-imf
+# 5. Build the image
+make yocto-build
 ```
 
-### 2. Initialise the Build Directory
+### Overriding Build Parameters
 
 ```bash
-cd ~/imf-build
-source sources/poky/oe-init-build-env build
+# Build for eMMC variant
+make yocto-build MACHINE=myd-yf13x-emmc
+
+# Build a different image
+make yocto-build IMAGE=myir-image-qt
 ```
 
-### 3. Configure `bblayers.conf`
+### Available Machines
 
-Edit `build/conf/bblayers.conf` to include all required layers:
+| MACHINE | Description |
+|---------|-------------|
+| `myd-yf13x` | MYD-YF13X development board (SD card boot, **default**) |
+| `myd-yf13x-emmc` | MYD-YF13X with eMMC boot |
+| `myd-yf13x-nand` | MYD-YF13X with NAND boot |
 
-```bitbake
-BBLAYERS ?= " \
-  ${TOPDIR}/../sources/poky/meta \
-  ${TOPDIR}/../sources/poky/meta-poky \
-  ${TOPDIR}/../sources/meta-openembedded/meta-oe \
-  ${TOPDIR}/../sources/meta-openembedded/meta-networking \
-  ${TOPDIR}/../sources/meta-myir-imx \
-  ${TOPDIR}/../sources/meta-imf \
-  "
-```
+## Building Manually (Alternative)
 
-### 4. Configure `local.conf`
+If you prefer not to use the Makefile:
 
-Add or modify the following settings in `build/conf/local.conf`:
-
-```bitbake
-# Target machine
-MACHINE = "myc-yf13x"
-
-# Distribution
-DISTRO = "imf"
-
-# Parallel build options (adjust to your host)
-BB_NUMBER_THREADS = "8"
-PARALLEL_MAKE = "-j 8"
-
-# Optional: shared download and sstate cache directories
-# DL_DIR = "/shared/yocto/downloads"
-# SSTATE_DIR = "/shared/yocto/sstate-cache"
-```
-
-## Building the Image
+### 1. Extract BSP Layers
 
 ```bash
-cd ~/imf-build
-source sources/poky/oe-init-build-env build
-
-bitbake imf-image
+mkdir -p .release-staging
+# Place or download yf13x-yocto-stm32mp1-5.15.67.tar.bz2 into .release-staging/
+tar xjf .release-staging/yf13x-yocto-stm32mp1-5.15.67.tar.bz2 -C yocto-bsp/
 ```
+
+### 2. Initialise the Build Environment
+
+```bash
+source yocto-bsp/layers/openembedded-core/oe-init-build-env yocto-bsp/build
+```
+
+> **Note:** `oe-init-build-env` changes your working directory to `yocto-bsp/build/`.
+
+### 3. Verify Configuration
+
+The `bblayers.conf` and `local.conf` in `yocto-bsp/build/conf/` are pre-configured
+and checked into the repository. Verify the layer setup:
+
+```bash
+bitbake-layers show-layers
+```
+
+You should see all 16 layers listed.
+
+### 4. Build
+
+```bash
+MACHINE=myd-yf13x bitbake myir-image-core
+```
+
+## Build Output
 
 A successful build produces artefacts in:
 
 ```
-build/tmp/deploy/images/myc-yf13x/
-├── imf-image-myc-yf13x.wic.gz   # Full disk image (SD card / eMMC)
-├── imf-image-myc-yf13x.tar.gz   # Root filesystem archive
-├── uImage                        # Linux kernel image
-├── myc-yf13x.dtb                 # Device tree blob
-└── u-boot.imx                    # U-Boot SPL + proper U-Boot
+yocto-bsp/build/tmp/deploy/images/myd-yf13x/
 ```
 
-## Flashing the Image
+Key files include the root filesystem image, kernel, device tree, and
+bootloader components for the STM32MP1 platform.
 
-### SD Card
+## Build Performance
 
-```bash
-# Decompress and write the WIC image to an SD card (replace /dev/sdX)
-zcat build/tmp/deploy/images/myc-yf13x/imf-image-myc-yf13x.wic.gz \
-  | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
-sync
-```
+| Setting | Variable | Default | Recommendation |
+|---------|----------|---------|----------------|
+| BitBake threads | `BB_NUMBER_THREADS` | auto | Number of CPU cores |
+| Parallel make | `PARALLEL_MAKE` | auto | `-j <cores>` |
+| Remove work dirs | `INHERIT += "rm_work"` | disabled | Enable to save disk |
+| Download cache | `DL_DIR` | `${TOPDIR}/downloads` | Shared path across builds |
+| Sstate cache | `SSTATE_DIR` | `${TOPDIR}/sstate-cache` | Shared path across builds |
 
-### eMMC (via U-Boot)
-
-Refer to the MYiR MYC-YF13X hardware manual for the boot-mode switch settings
-required to enter the USB mass-storage / fastboot flash mode.
-
-## SDK / Toolchain (Optional)
-
-To build a standalone cross-compilation toolchain for application development:
-
-```bash
-bitbake imf-image -c populate_sdk
-```
-
-The installer is placed in `build/tmp/deploy/sdk/`.
+Set these in `yocto-bsp/build/conf/local.conf`.
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
+| Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| `ERROR: Nothing PROVIDES ...` | Missing layer or misspelled recipe | Verify `bblayers.conf` |
-| Fetch errors | Network issue or wrong URI | Check `DL_DIR`; use a mirror |
-| Out of disk space | Build cache growth | Set `INHERIT += "rm_work"` in `local.conf` |
-| Slow build | Default thread count | Increase `BB_NUMBER_THREADS` / `PARALLEL_MAKE` |
+| `Layer '…' depends on layer '…', but this layer is not enabled` | Missing layer in `bblayers.conf` or wrong `LAYERDEPENDS` collection name | Run `make yocto-check`; ensure `LAYERDEPENDS` uses collection names (`openembedded-layer`, not `meta-oe`) |
+| `ERROR: Nothing PROVIDES '…'` | Missing layer or misspelled recipe | Verify `bblayers.conf` with `bitbake-layers show-layers` |
+| `No bb files in default matched BBFILE_PATTERN_…` | Layer has no recipes yet | Informational warning; safe to ignore for empty custom layers |
+| `Multiple providers are available for runtime …` | Two layers provide the same package | Add `PREFERRED_RPROVIDER_<pkg>` to `local.conf` |
+| Fetch errors / `Failed to fetch URL` | Upstream mirror down or network issue | BitBake retries via `MIRRORS`; check `DL_DIR` |
+| Out of disk space | Build cache growth (>50 GB) | Set `INHERIT += "rm_work"` in `local.conf` |
+| Slow first build | No sstate cache, all 4000+ tasks from scratch | Expected; subsequent builds are much faster |
 
 ## Related Documents
 

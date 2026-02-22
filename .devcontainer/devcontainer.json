@@ -1,0 +1,60 @@
+{
+    "name": "IMF Yocto Build",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "USERNAME": "yocto",
+            "USER_UID": "1000",
+            "USER_GID": "1000"
+        }
+    },
+    "features": {
+      "ghcr.io/devcontainers/features/common-utils:2": {
+        "installZsh": "true",
+        "configureZshAsDefaultShell": "true",
+        "installOhMyZsh": "true"
+      },
+      "ghcr.io/the78mole/devcontainer-features/uv:1": {
+        "version": "latest"
+      },
+      "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
+      "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "remoteUser": "yocto",
+    "containerEnv": {
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "en_US.UTF-8"
+    },
+    "mounts": [
+        // Persist Yocto downloads and sstate-cache across container rebuilds
+        "source=imf-yocto-downloads,target=/workspace/yocto-bsp/build/downloads,type=volume",
+        "source=imf-yocto-sstate,target=/workspace/yocto-bsp/build/sstate-cache,type=volume"
+    ],
+    "runArgs": [
+        // Yocto builds need significant resources
+        "--memory=16g",
+        "--cpus=8"
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "files.watcherExclude": {
+                    "**/yocto-bsp/**": true,
+                    "**/build/**": true
+                },
+                "search.exclude": {
+                    "**/yocto-bsp/**": true,
+                    "**/build/**": true
+                }
+            },
+            "extensions": [
+                "ms-vscode.cpptools",
+                "yocto-project.yocto-bitbake",
+                "EditorConfig.EditorConfig"
+            ]
+        }
+    },
+    "postCreateCommand": ".devcontainer/post-create.sh",
+    "forwardPorts": []
+}

@@ -45,6 +45,76 @@ integrated-micro-firewall/
 - [Yocto Build Guide](docs/software/yocto-build.md)
 - [Use Case: HP iLO Protection](docs/use-cases/hp-ilo-protection.md)
 
+## Quick Start – Building `myir-image-core`
+
+### Prerequisites
+
+| Requirement | Minimum |
+|-------------|---------|
+| OS | Ubuntu 20.04 / 22.04 LTS |
+| RAM | 8 GB (16 GB recommended) |
+| Disk | 100 GB free space |
+| Tools | `git`, `make`, `oras`, `gh` CLI |
+
+Install the Yocto host dependencies:
+
+```bash
+sudo apt-get install -y \
+    gawk wget git diffstat unzip texinfo gcc build-essential \
+    chrpath socat cpio python3 python3-pip python3-pexpect \
+    xz-utils debianutils iputils-ping python3-git python3-jinja2 \
+    libegl1-mesa libsdl1.2-dev xterm python3-subunit mesa-common-dev \
+    zstd liblz4-tool
+```
+
+### Build Steps
+
+```bash
+# 1. Authenticate with GHCR (one-time, requires `gh auth login` first)
+make bsp-login
+
+# 2. Download the vendor BSP tarballs from GHCR
+make bsp-fetch
+
+# 3. Extract the Yocto BSP layers (automatic if needed)
+make bsp-extract
+
+# 4. Validate the layer configuration (optional but recommended)
+make yocto-check
+
+# 5. Build the image (takes several hours on a first build)
+make yocto-build
+```
+
+The default build targets machine **`myd-yf13x`** and image **`myir-image-core`**.
+Override via:
+
+```bash
+make yocto-build MACHINE=myd-yf13x-emmc IMAGE=myir-image-core
+```
+
+### Available Machines
+
+| MACHINE | Description |
+|---------|-------------|
+| `myd-yf13x` | MYD-YF13X development board (SD card boot, default) |
+| `myd-yf13x-emmc` | MYD-YF13X with eMMC boot |
+| `myd-yf13x-nand` | MYD-YF13X with NAND boot |
+
+### Build Artefacts
+
+After a successful build, images are in:
+
+```
+yocto-bsp/build/tmp/deploy/images/myd-yf13x/
+```
+
+### All Make Targets
+
+```bash
+make help
+```
+
 ## License
 
 See [LICENSE](LICENSE) for details.
