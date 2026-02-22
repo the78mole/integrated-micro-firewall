@@ -171,8 +171,80 @@ yocto-bsp/build/tmp-glibc/deploy/images/myd-yf13x/
 > **Note:** The directory is `tmp-glibc` (not `tmp`) because `DISTRO = "nodistro"`
 > sets `TCLIBC = "glibc"`, which causes BitBake to use `TMPDIR = tmp-glibc`.
 
-Key files include the root filesystem image, kernel, device tree, and
-bootloader components for the STM32MP1 platform.
+### Key Artefacts
+
+| File | Description |
+|------|-------------|
+| `myir-image-core-myd-yf13x.ext4` | Root filesystem (ext4) |
+| `myir-image-core-myd-yf13x.tar.xz` | Root filesystem (tarball) |
+| `st-image-bootfs-nodistro-myd-yf13x.ext4` | Boot partition (kernel + device tree) |
+| `st-image-vendorfs-nodistro-myd-yf13x.ext4` | Vendor filesystem |
+| `st-image-userfs-nodistro-myd-yf13x.ext4` | User data filesystem |
+| `arm-trusted-firmware/tf-a-*.stm32` | TF-A first-stage bootloader |
+| `fip/fip-*.bin` | FIP image (OP-TEE + U-Boot) |
+
+### Flash Layouts
+
+The build generates TSV flash layout files for use with **STM32CubeProgrammer**:
+
+```
+flashlayout_myir-image-core/optee/
+├── FlashLayout_sdcard_myb-stm32mp135x-256m-optee.tsv
+├── FlashLayout_sdcard_myb-stm32mp135x-512m-optee.tsv
+├── FlashLayout_emmc_myb-stm32mp135x-256m-optee.tsv
+└── FlashLayout_emmc_myb-stm32mp135x-512m-optee.tsv
+```
+
+| Flash Layout | Target | RAM |
+|--------------|--------|-----|
+| `FlashLayout_sdcard_…-256m-optee.tsv` | SD card | 256 MB |
+| `FlashLayout_sdcard_…-512m-optee.tsv` | SD card | 512 MB |
+| `FlashLayout_emmc_…-256m-optee.tsv` | eMMC | 256 MB |
+| `FlashLayout_emmc_…-512m-optee.tsv` | eMMC | 512 MB |
+
+Choose the layout matching your board's RAM size and target storage medium.
+
+## Flashing the Image
+
+Flashing uses **STM32CubeProgrammer** with the board in **USB DFU mode**.
+
+### Prerequisites
+
+- Install [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html) (v2.13+)
+- Connect the board via USB to the host
+- Set the board's boot switches to USB DFU mode (refer to the MYiR MYD-YF13X hardware manual)
+
+### Flash to SD Card
+
+```bash
+STM32_Programmer_CLI -c port=usb1 -w \
+  flashlayout_myir-image-core/optee/FlashLayout_sdcard_myb-stm32mp135x-512m-optee.tsv
+```
+
+### Flash to eMMC
+
+```bash
+STM32_Programmer_CLI -c port=usb1 -w \
+  flashlayout_myir-image-core/optee/FlashLayout_emmc_myb-stm32mp135x-512m-optee.tsv
+```
+
+> **Note:** Run the commands from the `tmp-glibc/deploy/images/myd-yf13x/` directory,
+> as the TSV files reference image paths relative to that location.
+
+### Partition Layout (SD Card Example)
+
+The flash layout writes the following partitions:
+
+| # | Name | Type | Content |
+|---|------|------|---------|
+| 1 | fsbl1 | Binary | `tf-a-…-sdcard.stm32` (first-stage bootloader) |
+| 2 | fsbl2 | Binary | `tf-a-…-sdcard.stm32` (backup copy) |
+| 3 | metadata1/2 | Binary | `metadata.bin` (A/B boot metadata) |
+| 4 | fip-a | FIP | `fip-…-optee.bin` (OP-TEE + U-Boot) |
+| 5 | bootfs | ext4 | Kernel, device trees (`st-image-bootfs`) |
+| 6 | vendorfs | ext4 | Vendor data (`st-image-vendorfs`) |
+| 7 | rootfs | ext4 | Root filesystem (`myir-image-core`) |
+| 8 | userfs | ext4 | User data (`st-image-userfs`) |
 
 ## Build Performance
 
@@ -195,6 +267,7 @@ Set these in `yocto-bsp/build/conf/local.conf`.
 | `No bb files in default matched BBFILE_PATTERN_…` | Layer has no recipes yet | Informational warning; safe to ignore for empty custom layers |
 | `Multiple providers are available for runtime …` | Two layers provide the same package | Add `PREFERRED_RPROVIDER_<pkg>` to `local.conf` |
 | Fetch errors / `Failed to fetch URL` | Upstream mirror down or network issue | BitBake retries via `MIRRORS`; check `DL_DIR` |
+| `Unable to find revision … in branch master` | Upstream repo renamed default branch (e.g. `master` → `main`) | Create a `.bbappend` in `meta-imf` overriding `SRC_URI` with the correct `branch=` (see `recipes-support/libiio/libiio_git.bbappend` for an example) |
 | Out of disk space | Build cache growth (>50 GB) | Set `INHERIT += "rm_work"` in `local.conf` |
 | Slow first build | No sstate cache, all 4000+ tasks from scratch | Expected; subsequent builds are much faster |
 
