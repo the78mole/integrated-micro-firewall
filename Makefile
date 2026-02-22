@@ -42,6 +42,8 @@ BSP_TARBALL_PATH := $(STAGING_DIR)/$(BSP_TARBALL)
 # MACHINE: myd-yf13x | myd-yf13x-emmc | myd-yf13x-nand
 MACHINE      ?= myd-yf13x
 IMAGE        ?= myir-image-core
+# TMPDIR name depends on DISTRO; nodistro uses tmp-glibc
+YOCTO_TMPDIR ?= tmp-glibc
 
 # --- Parallel build settings -------------------------------------------------
 # Adjust to your host capabilities; 0 = auto-detect
@@ -134,7 +136,7 @@ yocto-build: $(LAYERS_SENTINEL) ## Build the Yocto image (MACHINE & IMAGE overri
 	@echo "==> Building $(IMAGE) for MACHINE=$(MACHINE) …"
 	@bash -c 'source $(OE_INIT) $(BUILD_DIR) && MACHINE=$(MACHINE) bitbake $(IMAGE)'
 	@echo ""
-	@echo "    ✓ Build complete. Artefacts in $(BUILD_DIR)/tmp/deploy/images/$(MACHINE)/"
+	@echo "    ✓ Build complete. Artefacts in $(BUILD_DIR)/$(YOCTO_TMPDIR)/deploy/images/$(MACHINE)/"
 
 # ---------------------------------------------------------------------------
 #  Status & information
@@ -167,8 +169,8 @@ bsp-status: ## Show BSP file and layer status
 	@echo "  MACHINE = $(MACHINE)"
 	@echo "  IMAGE   = $(IMAGE)"
 	@echo ""
-	@if [ -d "$(BUILD_DIR)/tmp/deploy/images/$(MACHINE)" ]; then \
-		echo "  ✓ Build artefacts exist in $(BUILD_DIR)/tmp/deploy/images/$(MACHINE)/"; \
+	@if [ -d "$(BUILD_DIR)/$(YOCTO_TMPDIR)/deploy/images/$(MACHINE)" ]; then \
+		echo "  ✓ Build artefacts exist in $(BUILD_DIR)/$(YOCTO_TMPDIR)/deploy/images/$(MACHINE)/"; \
 	else \
 		echo "  ⚠ No build artefacts yet – run 'make yocto-build'"; \
 	fi
@@ -189,9 +191,9 @@ clean-bsp: ## Remove extracted BSP layers (keeps tarballs)
 	@echo "    ✓ BSP layers removed"
 
 .PHONY: clean-build
-clean-build: ## Remove Yocto build artifacts (tmp/, cache/)
+clean-build: ## Remove Yocto build artifacts (tmp-glibc/, cache/)
 	@echo "==> Cleaning Yocto build directory …"
-	rm -rf $(BUILD_DIR)/tmp $(BUILD_DIR)/cache
+	rm -rf $(BUILD_DIR)/$(YOCTO_TMPDIR) $(BUILD_DIR)/cache
 	@echo "    ✓ Build artifacts removed"
 
 .PHONY: restructure

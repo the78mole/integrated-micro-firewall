@@ -106,7 +106,7 @@ make yocto-build MACHINE=myd-yf13x-emmc IMAGE=myir-image-core
 After a successful build, images are in:
 
 ```
-yocto-bsp/build/tmp/deploy/images/myd-yf13x/
+yocto-bsp/build/tmp-glibc/deploy/images/myd-yf13x/
 ```
 
 ### All Make Targets

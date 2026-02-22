@@ -165,8 +165,11 @@ MACHINE=myd-yf13x bitbake myir-image-core
 A successful build produces artefacts in:
 
 ```
-yocto-bsp/build/tmp/deploy/images/myd-yf13x/
+yocto-bsp/build/tmp-glibc/deploy/images/myd-yf13x/
 ```
+
+> **Note:** The directory is `tmp-glibc` (not `tmp`) because `DISTRO = "nodistro"`
+> sets `TCLIBC = "glibc"`, which causes BitBake to use `TMPDIR = tmp-glibc`.
 
 Key files include the root filesystem image, kernel, device tree, and
 bootloader components for the STM32MP1 platform.
