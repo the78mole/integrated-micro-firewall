@@ -1,0 +1,54 @@
+---
+name: Hardware Issue
+description: Report a problem with the PCB design, BOM, or hardware assembly
+title: "[HW]: "
+labels: ["hardware"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for issues related to the PCB design, component selection, or hardware assembly.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What kind of hardware issue is this?
+      options:
+        - Schematic error
+        - PCB layout issue
+        - BOM / component selection
+        - Assembly / soldering problem
+        - Signal integrity / EMC
+        - Power supply / thermal
+        - Mechanical / form factor
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the hardware issue in detail.
+      placeholder: |
+        Which net / component / connector is affected?
+        Include KiCad reference designators if applicable (e.g., U3, R12, J2).
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Screenshots of schematic/layout, oscilloscope captures, photos, etc.
+      placeholder: Drag and drop images here or paste links.
+    validations:
+      required: false
+
+  - type: input
+    id: pcb-revision
+    attributes:
+      label: PCB revision
+      description: Which board revision does this apply to?
+      placeholder: e.g., v1.0, prototype
