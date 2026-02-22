@@ -46,7 +46,12 @@
                 "search.exclude": {
                     "**/yocto-bsp/**": true,
                     "**/build/**": true
-                }
+                },
+                "github.copilot.chat.commitMessageGeneration.instructions": [
+                    {
+                        "text": "Always generate commit messages in English. Use the Conventional Commits format (e.g. feat:, fix:, docs:, chore:, refactor:). Keep the subject line under 72 characters."
+                    }
+                ]
             },
             "extensions": [
                 "ms-vscode.cpptools",
