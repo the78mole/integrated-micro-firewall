@@ -1,0 +1,52 @@
+---
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the feature you'd like to see in the Integrated Micro Firewall.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which area does this feature relate to?
+      options:
+        - Firewall rules / nftables
+        - WireGuard VPN
+        - Yocto image / packages
+        - Web UI / management interface
+        - Hardware / PCB design
+        - Build system / CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem does this feature solve? Why is it needed?
+      placeholder: I need this because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should this feature work?
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered other approaches?
+    validations:
+      required: false

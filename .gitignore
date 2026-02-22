@@ -1,0 +1,85 @@
+# =============================================================================
+# Integrated Micro Firewall – .gitignore
+# =============================================================================
+
+# ---------------------
+# Vendor BSP tarballs (download via scripts/fetch-vendor-bsp.sh)
+# ---------------------
+software/vendor/bsp/
+hardware/vendor/myir/tools/
+
+# Large binary archives – never track
+*.tar.bz2
+*.tar.xz
+*.tar.gz
+*.tar.zst
+*.rar
+
+# Redundant ZIPs of already-tracked directories
+hardware/vendor/myir/**/*.zip
+
+# ---------------------
+# Yocto / OpenEmbedded build artefacts
+# ---------------------
+yocto-bsp/
+build/
+poky/
+bitbake/
+sstate-cache/
+downloads/
+tmp/
+cache/
+buildhistory/
+*.do_*
+*.sigdata.*
+*.siginfo
+
+# ---------------------
+# KiCad
+# ---------------------
+# Backup files
+*-backups/
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.bak
+_autosave-*
+fp-info-cache
+*.dsn
+*.ses
+
+# Gerber / fabrication outputs (regenerate from source)
+hardware/kicad/gerber/
+hardware/kicad/fabrication/
+
+# ---------------------
+# Editors & OS
+# ---------------------
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# ---------------------
+# Python
+# ---------------------
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ---------------------
+# Compiled binaries (BSP examples, etc.)
+# ---------------------
+*.o
+*.elf
+*.bin
+*.img
+*.wic
+*.wic.bz2
+*.wic.gz
+*.ext4
+*.rootfs.*
