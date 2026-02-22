@@ -1,0 +1,17 @@
+(---------------------------------------------------------------------)
+(                                                                     )
+(    DRILL LEGEND                                                     )
+(                                                                     )
+(    Drawing          : MYB-YF13X-V10-230424.brd                      )
+(    Software Version : 16.6-2015S112                                 )
+(    Date/Time        : Mon Apr 24 16:40:37 2023                      )
+(                                                                     )
+(---------------------------------------------------------------------)
+
+
+Begin processing of drill legend template file 'D:/1/Cadence/Cadence_SPB_16.6/share/pcb/text/nclegend/default-mil.dlt' ...
+End of drill legend template file processing.
+
+Begin processing drill holes.
+Warning : Hole 35.433-0.000-C-P-0.000-0.000 uses multiple drill figures.
+End processing drill holes.

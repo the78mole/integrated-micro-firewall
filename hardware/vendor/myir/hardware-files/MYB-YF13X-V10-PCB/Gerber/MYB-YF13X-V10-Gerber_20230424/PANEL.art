@@ -1,0 +1,35 @@
+G04 ================== begin FILE IDENTIFICATION RECORD ==================*
+G04 Layout Name:  MYB-YF13X-V10-230424.brd*
+G04 Film Name:    PANEL*
+G04 File Format:  Gerber RS274X*
+G04 File Origin:  Cadence Allegro 16.6-2015-S108*
+G04 Origin Date:  Mon Apr 24 16:41:07 2023*
+G04 *
+G04 Layer:  BOARD GEOMETRY/OUTLINE*
+G04 Layer:  BOARD GEOMETRY/PANEL*
+G04 *
+G04 Offset:    (0.000 0.000)*
+G04 Mirror:    No*
+G04 Mode:      Positive*
+G04 Rotation:  0*
+G04 FullContactRelief:  No*
+G04 UndefLineWidth:     0.000*
+G04 ================== end FILE IDENTIFICATION RECORD ====================*
+%FSLAX25Y25*MOIN*%
+%IR0*IPPOS*OFA0.00000B0.00000*MIA0B0*SFA1.00000B1.00000*%
+%ADD10C,.02*%
+G75*
+%LPD*%
+G75*
+G54D10*
+G01X183000Y311500D02*
+X325500D01*
+Y73500D01*
+G01X385500Y-324000D02*
+X243000D01*
+Y-86000D01*
+G01Y-227000D02*
+X354000D01*
+G01X325500Y214500D02*
+X214500D01*
+M02*
