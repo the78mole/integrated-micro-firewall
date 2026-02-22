@@ -37,6 +37,7 @@ META_IMF     := $(REPO_ROOT)/software/meta-imf
 # --- BSP tarball (the one that contains Yocto layers) ------------------------
 BSP_TARBALL  := yf13x-yocto-stm32mp1-5.15.67.tar.bz2
 BSP_TARBALL_PATH := $(STAGING_DIR)/$(BSP_TARBALL)
+BSP_TARBALL_FETCH_PATH := $(BSP_DIR)/$(BSP_TARBALL)
 
 # --- Yocto settings ----------------------------------------------------------
 # MACHINE: myd-yf13x | myd-yf13x-emmc | myd-yf13x-nand
@@ -85,7 +86,7 @@ bsp-login: ## Authenticate oras CLI with GHCR (needs gh auth)
 	@echo "    ✓ Login successful"
 
 .PHONY: bsp-fetch
-bsp-fetch: ## Download BSP tarballs from GHCR → .release-staging/
+bsp-fetch: ## Download BSP tarballs from GHCR → software/vendor/bsp/
 	@echo "==> Fetching vendor BSP from GHCR …"
 	$(SCRIPTS_DIR)/fetch-vendor-bsp.sh
 
@@ -107,9 +108,25 @@ $(LAYERS_SENTINEL): $(BSP_TARBALL_PATH)
 	@echo "    ✓ BSP layers extracted"
 
 $(BSP_TARBALL_PATH):
-	@echo "ERROR: BSP tarball not found at $(BSP_TARBALL_PATH)"
-	@echo "       Run 'make bsp-fetch' first, or place the tarball manually."
-	@exit 1
+	@mkdir -p "$(STAGING_DIR)"
+	@if [ -f "$(BSP_TARBALL_FETCH_PATH)" ]; then \
+		echo "==> Found tarball in $(BSP_DIR), copying to .release-staging/ …"; \
+		cp -f "$(BSP_TARBALL_FETCH_PATH)" "$(BSP_TARBALL_PATH)"; \
+	elif [ -f "$(BSP_TARBALL_PATH)" ]; then \
+		true; \
+	else \
+		echo "==> Tarball not found locally, running 'make bsp-fetch' …"; \
+		$(MAKE) --no-print-directory bsp-fetch; \
+		if [ -f "$(BSP_TARBALL_FETCH_PATH)" ]; then \
+			echo "==> Copying fetched tarball to .release-staging/ …"; \
+			cp -f "$(BSP_TARBALL_FETCH_PATH)" "$(BSP_TARBALL_PATH)"; \
+		else \
+			echo "ERROR: BSP tarball not found at $(BSP_TARBALL_PATH)"; \
+			echo "       Also checked: $(BSP_TARBALL_FETCH_PATH)"; \
+			echo "       Run 'make bsp-fetch' first, or place the tarball manually."; \
+			exit 1; \
+		fi; \
+	fi
 
 # ---------------------------------------------------------------------------
 #  Yocto build
