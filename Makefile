@@ -18,6 +18,7 @@
 #   MACHINE=myd-yf13x-emmc     (eMMC variant)
 #   MACHINE=myd-yf13x-nand     (NAND variant)
 #   IMAGE=myir-image-core      (default)
+#   BUILD_DIR=/tmp/build        (optional external build directory)
 # =============================================================================
 
 SHELL        := /bin/bash
@@ -30,7 +31,9 @@ STAGING_DIR  := $(REPO_ROOT)/.release-staging
 BSP_DIR      := $(REPO_ROOT)/software/vendor/bsp
 YOCTO_DIR    := $(REPO_ROOT)/yocto-bsp
 LAYERS_DIR   := $(YOCTO_DIR)/layers
-BUILD_DIR    := $(YOCTO_DIR)/build
+DEFAULT_BUILD_DIR := $(YOCTO_DIR)/build
+BUILD_DIR    ?= $(DEFAULT_BUILD_DIR)
+BUILD_CONF_SOURCE_DIR := $(DEFAULT_BUILD_DIR)/conf
 OE_INIT      := $(LAYERS_DIR)/openembedded-core/oe-init-build-env
 META_IMF     := $(REPO_ROOT)/software/meta-imf
 
@@ -132,15 +135,38 @@ $(BSP_TARBALL_PATH):
 #  Yocto build
 # ---------------------------------------------------------------------------
 
+.PHONY: yocto-prepare-builddir
+yocto-prepare-builddir: $(LAYERS_SENTINEL) ## Ensure BUILD_DIR exists and has conf files
+	@mkdir -p "$(BUILD_DIR)/conf"
+	@if [ ! -f "$(BUILD_CONF_SOURCE_DIR)/bblayers.conf" ] || [ ! -f "$(BUILD_CONF_SOURCE_DIR)/local.conf" ]; then \
+		echo "ERROR: Missing source config files in $(BUILD_CONF_SOURCE_DIR)"; \
+		echo "       Expected: bblayers.conf and local.conf"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(BUILD_DIR)/conf/bblayers.conf" ] || [ ! -f "$(BUILD_DIR)/conf/local.conf" ]; then \
+		echo "==> Initialising BUILD_DIR config in $(BUILD_DIR)/conf from $(BUILD_CONF_SOURCE_DIR) …"; \
+		cp -n "$(BUILD_CONF_SOURCE_DIR)/bblayers.conf" "$(BUILD_DIR)/conf/bblayers.conf"; \
+		cp -n "$(BUILD_CONF_SOURCE_DIR)/local.conf" "$(BUILD_DIR)/conf/local.conf"; \
+		if [ -f "$(BUILD_CONF_SOURCE_DIR)/templateconf.cfg" ]; then \
+			cp -n "$(BUILD_CONF_SOURCE_DIR)/templateconf.cfg" "$(BUILD_DIR)/conf/templateconf.cfg"; \
+		fi; \
+	else \
+		echo "==> Using existing build config in $(BUILD_DIR)/conf"; \
+	fi
+	@if [ "$(BUILD_DIR)" != "$(DEFAULT_BUILD_DIR)" ] && [ -f "$(BUILD_DIR)/conf/bblayers.conf" ]; then \
+		echo "==> Normalising OEROOT in $(BUILD_DIR)/conf/bblayers.conf to $(YOCTO_DIR) …"; \
+		sed -i 's|^OEROOT[[:space:]]*:=[[:space:]]*.*|OEROOT := "$(YOCTO_DIR)"|' "$(BUILD_DIR)/conf/bblayers.conf"; \
+	fi
+
 .PHONY: yocto-check
-yocto-check: $(LAYERS_SENTINEL) ## Validate Yocto layer configuration
+yocto-check: yocto-prepare-builddir ## Validate Yocto layer configuration
 	@echo "==> Checking layer configuration …"
 	@bash -c 'source $(OE_INIT) $(BUILD_DIR) >/dev/null 2>&1 && bitbake-layers show-layers'
 	@echo ""
 	@echo "    ✓ Layer configuration OK"
 
 .PHONY: yocto-init
-yocto-init: $(LAYERS_SENTINEL) ## Print the command to source the Yocto build env
+yocto-init: yocto-prepare-builddir ## Print the command to source the Yocto build env
 	@echo ""
 	@echo "Run this in your shell (cannot be done from make):"
 	@echo ""
@@ -149,7 +175,7 @@ yocto-init: $(LAYERS_SENTINEL) ## Print the command to source the Yocto build en
 	@echo ""
 
 .PHONY: yocto-build
-yocto-build: $(LAYERS_SENTINEL) ## Build the Yocto image (MACHINE & IMAGE overridable)
+yocto-build: yocto-prepare-builddir ## Build the Yocto image (MACHINE & IMAGE overridable)
 	@echo "==> Building $(IMAGE) for MACHINE=$(MACHINE) …"
 	@bash -c 'source $(OE_INIT) $(BUILD_DIR) && MACHINE=$(MACHINE) bitbake $(IMAGE)'
 	@echo ""

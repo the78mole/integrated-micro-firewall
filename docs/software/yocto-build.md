@@ -113,7 +113,14 @@ make yocto-build MACHINE=myd-yf13x-emmc
 
 # Build a different image
 make yocto-build IMAGE=myir-image-qt
+
+# Build outside the workspace (keeps repo build/conf as config source)
+make yocto-build BUILD_DIR=/tmp/build
 ```
+
+When `BUILD_DIR` points outside the repo, the Makefile initialises
+`$BUILD_DIR/conf/` from `yocto-bsp/build/conf/` if `local.conf` or
+`bblayers.conf` are missing.
 
 ### Available Machines
 

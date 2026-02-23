@@ -91,7 +91,13 @@ Override via:
 
 ```bash
 make yocto-build MACHINE=myd-yf13x-emmc IMAGE=myir-image-core
+
+# Optional: use an external Yocto build directory
+make yocto-build BUILD_DIR=/tmp/build
 ```
+
+When `BUILD_DIR` is set outside the workspace, the Makefile initialises
+`$BUILD_DIR/conf/` from `yocto-bsp/build/conf/` if required files are missing.
 
 ### Available Machines
 
@@ -107,6 +113,12 @@ After a successful build, images are in:
 
 ```
 yocto-bsp/build/tmp-glibc/deploy/images/myd-yf13x/
+```
+
+With external build dir:
+
+```
+<BUILD_DIR>/tmp-glibc/deploy/images/<MACHINE>/
 ```
 
 ### All Make Targets
