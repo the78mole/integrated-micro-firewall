@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zstd liblz4-tool file locales tmux \
     # Networking & convenience
     curl ca-certificates sudo nano less rsync \
+    # For ./scripts/create_sdcard_from_flashlayout.sh
+    gdisk \
     # For fetch-vendor-bsp.sh
     jq \
     && rm -rf /var/lib/apt/lists/*
